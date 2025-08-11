@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title th:text="${attempt.exam.title} + ' - Result'">Result</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f4f4;
+            margin: 0; padding: 20px;
+        }
+        .container {
+            max-width: 900px;
+            margin: auto;
+            padding: 20px;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+        }
+        h1 { color: #007bff; }
+        .summary { margin-bottom: 20px; }
+        .question {
+            background: #f9f9f9;
+            border: 1px solid #ddd;
+            padding: 12px;
+            margin-bottom: 15px;
+            border-radius: 5px;
+        }
+        .option {
+            padding: 6px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin: 4px 0;
+        }
+        .correct {
+            background: #d4edda;
+            color: #155724;
+            font-weight: bold;
+        }
+        .wrong {
+            background: #f8d7da;
+            color: #721c24;
+            font-weight: bold;
+        }
+        .selected {
+            border-width: 2px;
+            border-color: #007bff;
+        }
+        .skipped {
+            color: gray;
+            font-style: italic;
+        }
+        .option-icon {
+            margin-right: 6px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1 th:text="${attempt.exam.title}"></h1>
+    <div class="summary">
+        <p>Date: <span th:text="${#temporals.format(attempt.attemptDate, 'dd-MM-yyyy HH:mm')}"></span></p>
+        <p>Score: <span th:text="${attempt.score} + ' / ' + ${attempt.totalQuestions}"></span></p>
+    </div>
+
+    <div th:each="q, idx : ${attempt.exam.questions}" class="question"
+         th:with="selectedOptionId=${answers[q.id]}">
+        <p><b th:text="'Q' + (${idx.index} + 1) + '. ' + ${q.text}"></b></p>
+
+        <!-- Skipped question -->
+        <div th:if="${selectedOptionId == null}" class="skipped">
+            You did not answer this question.
+        </div>
+
+        <!-- Options -->
+        <div th:each="opt : ${q.options}"
+             th:class="'option'
+                       + (${opt.correct} ? ' correct' : '')
+                       + (${opt.id == selectedOptionId and !opt.correct} ? ' wrong' : '')
+                       + (${opt.id == selectedOptionId} ? ' selected' : '')">
+
+            <!-- Icon for correct options -->
+            <span class="option-icon" th:text="${opt.correct} ? '✔' : ''"></span>
+            <span th:text="${opt.text}"></span>
+
+            <!-- User wrong -->
+            <span th:if="${opt.id == selectedOptionId and !opt.correct}"
+                  style="margin-left:8px;">❌ Your Choice</span>
+
+            <!-- User correct -->
+            <span th:if="${opt.id == selectedOptionId and opt.correct}"
+                  style="margin-left:8px;">✅ Your Choice</span>
+
+            <!-- Correct answer (when user wrong) -->
+            <span th:if="${opt.correct and opt.id != selectedOptionId}"
+                  style="margin-left:8px; font-weight:normal; font-style:italic;">
+                (Correct Answer)
+            </span>
+        </div>
+    </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title th:text="${exam.title}">Take Exam</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #f4f4f4; margin:0; padding:0; }
+        .container { max-width:900px; margin: 30px auto; background:white;
+            padding: 25px; border-radius:8px; box-shadow:0 0 8px rgba(0,0,0,0.1);}
+        h1 { color:#007bff; margin-top:0; }
+        .exam-meta { margin-bottom:20px; }
+        .question {
+            background:#f9f9f9; border:1px solid #ddd; padding:15px;
+            border-radius:6px; margin-bottom:20px;
+        }
+        .question p { font-weight:bold; margin-bottom:8px; }
+        .option { display:block; margin-bottom:5px; cursor: pointer; }
+        .option input { margin-right:8px; }
+        .submit-btn {
+            background:#007bff; color:white; border:none;
+            padding:10px 18px; border-radius:4px;
+            font-weight:bold; cursor:pointer;
+        }
+        .submit-btn:hover { background:#0056b3; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1 th:text="${exam.title}">Exam Title</h1>
+
+    <div class="exam-meta">
+        <p th:text="${exam.description}">Exam description...</p>
+        <p><b>Duration:</b> <span th:text="${exam.durationMinutes}"></span> minutes</p>
+        <p><b>Total Questions:</b> <span th:text="${#lists.size(exam.questions)}"></span></p>
+    </div>
+
+    <form th:action="@{/user/submit-exam/{id}(id=${exam.id})}" method="post">
+        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+
+        <!-- Loop through questions -->
+        <div th:each="q, qStat : ${exam.questions}" class="question">
+            <p th:text="'Q' + (${qStat.index} + 1) + '. ' + ${q.text}">Question text</p>
+
+            <!-- Loop through options -->
+            <label class="option" th:each="op : ${q.options}">
+                <input type="radio"
+                       th:name="'q_' + ${q.id}"
+                       th:value="${op.id}"
+                       required />
+                <span th:text="${op.text}">Option text</span>
+            </label>
+        </div>
+
+        <button type="submit" class="submit-btn">Submit Exam</button>
+    </form>
+</div>
+
+</body>
+</html>

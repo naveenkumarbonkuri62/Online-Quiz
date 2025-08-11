@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Edit Exam - SmartQuiz</title>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #f4f4f4; padding: 20px; }
+        .container { max-width: 1000px; margin: auto; background: white; padding: 20px; border-radius: 8px; }
+        h2 { color: #007bff; border-bottom: 2px solid #007bff; padding-bottom: 5px; }
+        .form-group { margin-bottom: 10px; }
+        label { font-weight: bold; display: block; margin-bottom: 4px; }
+        input[type="text"], input[type="number"], textarea {
+            width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;
+        }
+        button { background: #007bff; color: white; padding: 8px 12px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        button:hover { background: #0056b3; }
+        .question-block, .option-block { border: 1px solid #ddd; background: #fafafa; padding: 12px; margin-top: 10px; border-radius: 6px; }
+        .option-block { margin-left: 15px; display: flex; align-items: center; gap: 8px; }
+        .remove-btn { background: #dc3545; color: white; border: none; padding: 5px 8px; border-radius: 4px; cursor: pointer; }
+        .remove-btn:hover { background: #b02a37; }
+        .drop-zone { border: 2px dashed #888; background: #fffbe6; padding: 8px; min-height: 40px; margin-top: 8px; }
+        .highlight { border-color: #007bff; background: #e6f2ff;}
+        .correct-preview { font-weight: bold; color: #007bff; }
+        .error-highlight { border-color: red !important; }
+        .error-highlight h4 { color: red; }
+        .option-label { font-weight: bold; min-width: 1.5em; display: inline-block; color: #444; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Edit Exam</h2>
+
+    <form th:action="@{/admin/edit-exam/{id}(id=${exam.id})}" th:object="${exam}" method="post" onsubmit="return validateForm()">
+        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+
+        <!-- Title, Description, Duration -->
+        <div class="form-group">
+            <label>Title:</label>
+            <input type="text" th:field="*{title}" required>
+        </div>
+        <div class="form-group">
+            <label>Description:</label>
+            <textarea th:field="*{description}" required></textarea>
+        </div>
+        <div class="form-group">
+            <label>Overall Duration (Minutes):</label>
+            <input type="number" th:field="*{durationMinutes}" min="1" required>
+        </div>
+
+        <!-- Questions -->
+        <h3>Questions</h3>
+        <div id="questions-area">
+            <div th:each="question, qStat : *{questions}" class="question-block" th:attr="data-qindex=${qStat.index}">
+                <h4>Question <span class="question-number" th:text="${qStat.index + 1}"></span></h4>
+                <input type="hidden" th:field="*{questions[__${qStat.index}__].id}" />
+
+                <div class="form-group">
+                    <label>Question Text:</label>
+                    <input type="text" th:field="*{questions[__${qStat.index}__].text}" required>
+                </div>
+                <div class="form-group">
+                    <label>Time Limit (seconds):</label>
+                    <input type="number" min="5" th:field="*{questions[__${qStat.index}__].timeLimitSeconds}" required>
+                </div>
+
+                <!-- Options -->
+                <div th:attr="id='options-' + ${qStat.index}">
+                    <div th:each="option, oStat : *{questions[__${qStat.index}__].options}"
+                         class="option-block"
+                         draggable="true"
+                         th:attr="data-qindex=${qStat.index}">
+                        <span class="option-label" th:text="${#strings.chr(97 + oStat.index)} + '.'"></span>
+                        <input type="hidden" th:field="*{questions[__${qStat.index}__].options[__${oStat.index}__].id}" />
+                        <input type="text" th:field="*{questions[__${qStat.index}__].options[__${oStat.index}__].text}" required>
+                        <input type="hidden" th:field="*{questions[__${qStat.index}__].options[__${oStat.index}__].correct}">
+                        <button type="button" class="remove-btn" onclick="removeOption(this)">X</button>
+                    </div>
+                </div>
+
+                <label>Correct Answer:</label>
+                <div class="drop-zone" th:attr="data-qindex=${qStat.index}">
+                    <span th:if="${question.options.?[correct].size() > 0}"
+                          th:text="'Correct: ' + ${question.options.?[correct].get(0).text}"
+                          class="correct-preview"></span>
+                    <span th:if="${question.options.?[correct].size() == 0}" style="color:#999;">(None selected yet)</span>
+                </div>
+
+                <button type="button" onclick="addOption([[${qStat.index}]])">+ Add Option</button>
+                <button type="button" class="remove-btn" onclick="removeQuestion(this)">Remove Question</button>
+            </div>
+        </div>
+
+        <button type="button" onclick="addQuestion()">+ Add Question</button>
+        <br><br>
+        <button type="submit">Save Changes</button>
+        <a th:href="@{/admin/dashboard}" style="margin-left: 15px;">Cancel</a>
+    </form>
+</div>
+
+<script>
+    let questionIndex = /*[[${#lists.size(exam.questions)}]]*/ 0;
+    let draggedOption = null;
+
+    function addQuestion() {
+        const qArea = document.getElementById('questions-area');
+        const qDiv = document.createElement('div');
+        qDiv.classList.add('question-block');
+        qDiv.innerHTML = `
+            <h4>Question <span class="question-number"></span></h4>
+            <div class="form-group">
+                <label>Question Text:</label>
+                <input type="text" name="questions[${questionIndex}].text" required>
+            </div>
+            <div class="form-group">
+                <label>Time Limit (seconds):</label>
+                <input type="number" name="questions[${questionIndex}].timeLimitSeconds" min="5" required>
+            </div>
+            <div id="options-${questionIndex}"></div>
+            <label>Correct Answer:</label>
+            <div class="drop-zone" data-qindex="${questionIndex}">(None selected yet)</div>
+            <button type="button" onclick="addOption(${questionIndex})">+ Add Option</button>
+            <button type="button" class="remove-btn" onclick="removeQuestion(this)">Remove Question</button>
+        `;
+        qArea.appendChild(qDiv);
+        questionIndex++;
+        updateQuestionNumbers();
+        renumberFormFields();
+    }
+
+    function addOption(qIndex) {
+        const oa = document.getElementById(`options-${qIndex}`);
+        const oIndex = oa ? oa.children.length : 0;
+        const label = String.fromCharCode(97 + oIndex) + '.';
+        const optDiv = document.createElement('div');
+        optDiv.classList.add('option-block');
+        optDiv.setAttribute('draggable', 'true');
+        optDiv.setAttribute('data-qindex', qIndex);
+        optDiv.innerHTML = `
+            <span class="option-label">${label}</span>
+            <input type="text" name="questions[${qIndex}].options[${oIndex}].text" required>
+            <input type="hidden" name="questions[${qIndex}].options[${oIndex}].correct" value="false">
+            <button type="button" class="remove-btn" onclick="removeOption(this)">X</button>
+        `;
+        if (oa) oa.appendChild(optDiv);
+        renumberFormFields();
+    }
+
+    function removeQuestion(btn) {
+        btn.closest('.question-block').remove();
+        updateQuestionNumbers();
+        renumberFormFields();
+    }
+
+    function removeOption(btn) {
+        btn.closest('.option-block').remove();
+        renumberOptions(btn.closest('.question-block'));
+        renumberFormFields();
+    }
+
+    function updateQuestionNumbers() {
+        document.querySelectorAll('#questions-area .question-block').forEach((block, idx) => {
+            block.querySelector('.question-number').textContent = idx + 1;
+            renumberOptions(block);
+        });
+    }
+
+    function renumberOptions(qBlock) {
+        qBlock.querySelectorAll('.option-block').forEach((opt, idx) => {
+            opt.querySelector('.option-label').textContent = String.fromCharCode(97 + idx) + '.';
+        });
+    }
+
+    function renumberFormFields() {
+        document.querySelectorAll('#questions-area .question-block').forEach((block, qIdx) => {
+            block.querySelectorAll('input, textarea').forEach(input => {
+                if (input.name) {
+                    input.name = input.name.replace(/questions\[\d+\]/, `questions[${qIdx}]`);
+                }
+            });
+            block.querySelectorAll('.option-block').forEach((opt, oIdx) => {
+                opt.querySelectorAll('input').forEach(input => {
+                    if (input.name && input.name.includes("options")) {
+                        input.name = input.name.replace(/options\[\d+\]/, `options[${oIdx}]`);
+                    }
+                });
+            });
+            const dropZone = block.querySelector('.drop-zone');
+            if (dropZone) dropZone.setAttribute('data-qindex', qIdx);
+        });
+    }
+
+    // Drag-drop for correct answer
+    document.addEventListener('dragstart', e => {
+        if (e.target.classList.contains('option-block')) {
+            draggedOption = e.target;
+            e.dataTransfer.effectAllowed = 'move';
+        }
+    });
+    document.addEventListener('dragover', e => {
+        if (e.target.classList.contains('drop-zone')) {
+            e.preventDefault();
+            e.target.classList.add('highlight');
+        }
+    });
+    document.addEventListener('dragleave', e => {
+        if (e.target.classList.contains('drop-zone')) {
+            e.target.classList.remove('highlight');
+        }
+    });
+    document.addEventListener('drop', e => {
+        if (e.target.classList.contains('drop-zone')) {
+            e.preventDefault();
+            e.target.classList.remove('highlight');
+            const qIndex = e.target.getAttribute('data-qindex');
+            document.querySelectorAll(`.option-block[data-qindex="${qIndex}"] input[type="hidden"]`)
+                .forEach(h => h.value = false);
+            draggedOption.querySelector('input[type="hidden"]').value = true;
+            e.target.innerHTML = `<strong class="correct-preview">Correct:</strong> ${draggedOption.querySelector('input[type="text"]').value}`;
+        }
+    });
+
+    function validateForm() {
+        let valid = true;
+        document.querySelectorAll('.question-block').forEach(qb => qb.classList.remove('error-highlight'));
+        document.querySelectorAll('#questions-area .question-block').forEach((block, idx) => {
+            const hasCorrect = Array.from(block.querySelectorAll('input[type="hidden"][name*=".correct"]'))
+                .some(h => h.value === "true" || h.value === true);
+            if (!hasCorrect) {
+                block.classList.add('error-highlight');
+                alert(`Question ${idx + 1} has no correct answer selected!`);
+                valid = false;
+            }
+        });
+        return valid;
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        questionIndex = document.querySelectorAll('#questions-area .question-block').length;
+        updateQuestionNumbers();
+        renumberFormFields();
+    });
+</script>
+
+</body>
+</html>
