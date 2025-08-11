@@ -2,13 +2,64 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <title>SmartQuiz - Home</title>
+    <meta charset="UTF-8">
+    <style>
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: linear-gradient(135deg, #007bff, #00c6ff);
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 600px;
+            margin: 12% auto;
+            padding: 40px;
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+            text-align: center;
+        }
+        h1 {
+            color: #007bff;
+            margin-bottom: 10px;
+        }
+        p {
+            color: #666;
+            font-size: 1.1em;
+            margin-bottom: 30px;
+        }
+        a.button {
+            display: inline-block;
+            text-decoration: none;
+            background: #007bff;
+            color: #fff;
+            padding: 12px 25px;
+            border-radius: 6px;
+            margin: 0 8px;
+            font-weight: bold;
+            font-size: 1em;
+            transition: background 0.3s ease, transform 0.2s ease;
+        }
+        a.button:hover {
+            background: #0056b3;
+            transform: translateY(-2px);
+        }
+        a.button.secondary {
+            background: #28a745;
+        }
+        a.button.secondary:hover {
+            background: #1e7e34;
+        }
+    </style>
 </head>
 <body>
-<h1>Welcome to SmartQuiz!</h1>
-<p>Your interactive quiz platform.</p>
+<div class="container">
+    <h1>Welcome to SmartQuiz!</h1>
+    <p>Your interactive platform for creating, taking, and mastering quizzes.</p>
 
-<a href="/login">Login</a> |
-<a href="/signup">Sign Up</a>
-
+    <a href="/login" class="button">Login</a>
+    <a href="/signup" class="button secondary">Sign Up</a>
+</div>
 </body>
 </html>
