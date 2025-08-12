@@ -2,99 +2,637 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <title>Edit Exam - SmartQuiz</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
-        body { font-family: Arial, sans-serif; background-color: #f4f4f4; padding: 20px; }
-        .container { max-width: 1000px; margin: auto; background: white; padding: 20px; border-radius: 8px; }
-        h2 { color: #007bff; border-bottom: 2px solid #007bff; padding-bottom: 5px; }
-        .form-group { margin-bottom: 10px; }
-        label { font-weight: bold; display: block; margin-bottom: 4px; }
-        input[type="text"], input[type="number"], textarea {
-            width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;
+        :root {
+            --primary-50: #eff6ff;
+            --primary-100: #dbeafe;
+            --primary-200: #bfdbfe;
+            --primary-300: #93c5fd;
+            --primary-400: #60a5fa;
+            --primary-500: #3b82f6;
+            --primary-600: #2563eb;
+            --primary-700: #1d4ed8;
+            --primary-800: #1e40af;
+            --primary-900: #1e3a8a;
+
+            --success-50: #f0fdf4;
+            --success-100: #dcfce7;
+            --success-500: #22c55e;
+            --success-600: #16a34a;
+
+            --warning-50: #fffbeb;
+            --warning-100: #fef3c7;
+            --warning-500: #f59e0b;
+            --warning-600: #d97706;
+
+            --error-50: #fef2f2;
+            --error-100: #fee2e2;
+            --error-500: #ef4444;
+            --error-600: #dc2626;
+
+            --gray-50: #f9fafb;
+            --gray-100: #f3f4f6;
+            --gray-200: #e5e7eb;
+            --gray-300: #d1d5db;
+            --gray-400: #9ca3af;
+            --gray-500: #6b7280;
+            --gray-600: #4b5563;
+            --gray-700: #374151;
+            --gray-800: #1f2937;
+            --gray-900: #111827;
+
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+            --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
         }
-        button { background: #007bff; color: white; padding: 8px 12px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
-        button:hover { background: #0056b3; }
-        .question-block, .option-block { border: 1px solid #ddd; background: #fafafa; padding: 12px; margin-top: 10px; border-radius: 6px; }
-        .option-block { margin-left: 15px; display: flex; align-items: center; gap: 8px; }
-        .remove-btn { background: #dc3545; color: white; border: none; padding: 5px 8px; border-radius: 4px; cursor: pointer; }
-        .remove-btn:hover { background: #b02a37; }
-        .drop-zone { border: 2px dashed #888; background: #fffbe6; padding: 8px; min-height: 40px; margin-top: 8px; }
-        .highlight { border-color: #007bff; background: #e6f2ff;}
-        .correct-preview { font-weight: bold; color: #007bff; }
-        .error-highlight { border-color: red !important; }
-        .error-highlight h4 { color: red; }
-        .option-label { font-weight: bold; min-width: 1.5em; display: inline-block; color: #444; }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, var(--gray-50) 0%, var(--primary-50) 100%);
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            color: var(--gray-800);
+            line-height: 1.6;
+        }
+
+        /* Header Styling */
+        header {
+            background: linear-gradient(135deg, var(--primary-600) 0%, var(--primary-700) 100%);
+            color: white;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: var(--shadow-lg);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            backdrop-filter: blur(10px);
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 1.875rem;
+            font-weight: 700;
+            user-select: none;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        header h1::before {
+            content: "🎓";
+            font-size: 2rem;
+        }
+
+        /* Container */
+        .container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            background: white;
+            border-radius: 1.5rem;
+            box-shadow: var(--shadow-xl);
+            overflow: hidden;
+            border: 1px solid var(--gray-200);
+        }
+
+        .container-inner {
+            padding: 2rem;
+        }
+
+        /* Headings */
+        h2 {
+            font-size: 1.875rem;
+            font-weight: 700;
+            color: var(--primary-700);
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 3px solid var(--primary-200);
+            position: relative;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        h2::before {
+            content: "✏️";
+            font-size: 1.5rem;
+        }
+
+        h2::after {
+            content: "";
+            position: absolute;
+            bottom: -3px;
+            left: 0;
+            width: 60px;
+            height: 3px;
+            background: linear-gradient(90deg, var(--primary-600), var(--primary-400));
+            border-radius: 2px;
+        }
+
+        h3 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--primary-700);
+            margin: 2rem 0 1rem 0;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        h3::before {
+            content: "❓";
+            font-size: 1.25rem;
+        }
+
+        /* Form Styling */
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        label {
+            font-weight: 600;
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--gray-700);
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        input[type="text"], input[type="number"], textarea {
+            width: 100%;
+            padding: 0.875rem 1rem;
+            border: 2px solid var(--gray-200);
+            border-radius: 0.75rem;
+            font-size: 1rem;
+            transition: all 0.2s ease;
+            background: white;
+            font-family: inherit;
+        }
+
+        input[type="text"]:focus, input[type="number"]:focus, textarea:focus {
+            outline: none;
+            border-color: var(--primary-500);
+            box-shadow: 0 0 0 3px var(--primary-100);
+            transform: translateY(-1px);
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 120px;
+        }
+
+        /* Button Styling */
+        button {
+            background: linear-gradient(135deg, var(--primary-600) 0%, var(--primary-700) 100%);
+            color: white;
+            border: none;
+            padding: 0.875rem 1.5rem;
+            border-radius: 0.75rem;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.875rem;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin: 0.25rem;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+            background: linear-gradient(135deg, var(--primary-700) 0%, var(--primary-800) 100%);
+        }
+
+        /* Question Block Styling */
+        .question-block {
+            background: linear-gradient(135deg, var(--gray-50) 0%, white 100%);
+            border: 2px solid var(--gray-200);
+            border-radius: 1rem;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow-md);
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .question-block:hover {
+            box-shadow: var(--shadow-lg);
+            border-color: var(--primary-300);
+        }
+
+        .question-block h4 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--primary-700);
+            margin: 0 0 1.5rem 0;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1rem;
+            background: linear-gradient(135deg, var(--primary-50) 0%, var(--primary-100) 100%);
+            border-radius: 0.75rem;
+            border: 1px solid var(--primary-200);
+        }
+
+        .question-block h4::before {
+            content: "Q";
+            background: linear-gradient(135deg, var(--primary-600) 0%, var(--primary-700) 100%);
+            color: white;
+            width: 2rem;
+            height: 2rem;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.875rem;
+            font-weight: 700;
+        }
+
+        /* Option Block Styling */
+        .option-block {
+            background: white;
+            border: 2px solid var(--gray-200);
+            border-radius: 0.75rem;
+            padding: 1rem;
+            margin: 0.75rem 0;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            cursor: grab;
+            transition: all 0.2s ease;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .option-block:hover {
+            border-color: var(--primary-300);
+            box-shadow: var(--shadow-md);
+            transform: translateY(-1px);
+        }
+
+        .option-block:active {
+            cursor: grabbing;
+        }
+
+        .option-label {
+            background: linear-gradient(135deg, var(--primary-600) 0%, var(--primary-700) 100%);
+            color: white;
+            width: 2.5rem;
+            height: 2.5rem;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1rem;
+            flex-shrink: 0;
+        }
+
+        .option-block input[type="text"] {
+            flex: 1;
+            margin: 0;
+        }
+
+        /* Remove Button Styling */
+        .remove-btn {
+            background: linear-gradient(135deg, var(--error-500) 0%, var(--error-600) 100%);
+            color: white;
+            border: none;
+            padding: 0.5rem;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.875rem;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 2.5rem;
+            height: 2.5rem;
+            flex-shrink: 0;
+        }
+
+        .remove-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-md);
+            background: linear-gradient(135deg, var(--error-600) 0%, var(--error-700) 100%);
+        }
+
+        .remove-btn::before {
+            content: "🗑️";
+            font-size: 1rem;
+        }
+
+        /* Drop Zone Styling */
+        .drop-zone {
+            border: 3px dashed var(--gray-300);
+            background: linear-gradient(135deg, var(--warning-50) 0%, var(--warning-100) 100%);
+            padding: 1.5rem;
+            border-radius: 1rem;
+            margin: 1rem 0;
+            text-align: center;
+            transition: all 0.3s ease;
+            min-height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .drop-zone::before {
+            content: "🎯";
+            font-size: 1.5rem;
+            margin-right: 0.5rem;
+        }
+
+        .drop-zone.highlight {
+            border-color: var(--primary-500);
+            background: linear-gradient(135deg, var(--primary-50) 0%, var(--primary-100) 100%);
+            transform: scale(1.02);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .correct-preview {
+            font-weight: 600;
+            color: var(--success-600);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .correct-preview::before {
+            content: "✅";
+            font-size: 1.25rem;
+        }
+
+        /* Error Highlighting */
+        .error-highlight {
+            border-color: var(--error-500) !important;
+            background: linear-gradient(135deg, var(--error-50) 0%, white 100%) !important;
+            animation: shake 0.5s ease-in-out;
+        }
+
+        .error-highlight h4 {
+            color: var(--error-600) !important;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+
+        /* Add Button Styling */
+        button[onclick*="addOption"], button[onclick*="addQuestion"] {
+            background: linear-gradient(135deg, var(--success-500) 0%, var(--success-600) 100%);
+        }
+
+        button[onclick*="addOption"]:hover, button[onclick*="addQuestion"]:hover {
+            background: linear-gradient(135deg, var(--success-600) 0%, var(--success-700) 100%);
+        }
+
+        button[onclick*="addOption"]::before {
+            content: "➕";
+            margin-right: 0.5rem;
+        }
+
+        button[onclick*="addQuestion"]::before {
+            content: "📝";
+            margin-right: 0.5rem;
+        }
+
+        /* Save Button */
+        button[type="submit"] {
+            background: linear-gradient(135deg, var(--primary-600) 0%, var(--primary-700) 100%);
+            padding: 1rem 2rem;
+            font-size: 1rem;
+            font-weight: 700;
+            margin-top: 2rem;
+        }
+
+        button[type="submit"]::before {
+            content: "💾";
+            margin-right: 0.5rem;
+        }
+
+        /* Cancel Link */
+        a[href*="dashboard"] {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--gray-600);
+            text-decoration: none;
+            padding: 1rem 2rem;
+            border: 2px solid var(--gray-300);
+            border-radius: 0.75rem;
+            font-weight: 600;
+            transition: all 0.2s ease;
+            margin-left: 1rem;
+        }
+
+        a[href*="dashboard"]:hover {
+            color: var(--gray-800);
+            border-color: var(--gray-400);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-md);
+        }
+
+        a[href*="dashboard"]::before {
+            content: "↩️";
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .container {
+                margin: 1rem;
+                border-radius: 1rem;
+            }
+
+            .container-inner {
+                padding: 1rem;
+            }
+
+            header {
+                padding: 1rem;
+            }
+
+            header h1 {
+                font-size: 1.5rem;
+            }
+
+            .question-block {
+                padding: 1rem;
+            }
+
+            .option-block {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 0.75rem;
+            }
+
+            .option-label {
+                align-self: flex-start;
+            }
+
+            button {
+                font-size: 0.75rem;
+                padding: 0.75rem 1rem;
+            }
+        }
+
+        /* Loading Animation */
+        .loading {
+            display: inline-block;
+            width: 1rem;
+            height: 1rem;
+            border: 2px solid var(--gray-300);
+            border-radius: 50%;
+            border-top-color: var(--primary-600);
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Form Actions */
+        .form-actions {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            margin-top: 2rem;
+            padding-top: 2rem;
+            border-top: 2px solid var(--gray-200);
+        }
+
+        /* Question Actions */
+        .question-actions {
+            display: flex;
+            gap: 0.75rem;
+            margin-top: 1.5rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--gray-200);
+        }
+
+        /* Drag and Drop Visual Feedback */
+        .option-block.dragging {
+            opacity: 0.5;
+            transform: rotate(5deg);
+        }
+
+        /* Success States */
+        .success-message {
+            background: linear-gradient(135deg, var(--success-50) 0%, var(--success-100) 100%);
+            color: var(--success-600);
+            border: 1px solid var(--success-200);
+            padding: 1rem 1.5rem;
+            border-radius: 0.75rem;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-weight: 500;
+        }
+
+        .success-message::before {
+            content: "✅";
+            font-size: 1.25rem;
+        }
     </style>
 </head>
 <body>
 
+<header>
+    <h1>SmartExam</h1>
+</header>
+
 <div class="container">
-    <h2>Edit Exam</h2>
+    <div class="container-inner">
+        <h2>Edit Exam</h2>
 
-    <form th:action="@{/admin/edit-exam/{id}(id=${exam.id})}" th:object="${exam}" method="post" onsubmit="return validateForm()">
-        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+        <form th:action="@{/admin/edit-exam/{id}(id=${exam.id})}" th:object="${exam}" method="post" onsubmit="return validateForm()">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
 
-        <!-- Title, Description, Duration -->
-        <div class="form-group">
-            <label>Title:</label>
-            <input type="text" th:field="*{title}" required>
-        </div>
-        <div class="form-group">
-            <label>Description:</label>
-            <textarea th:field="*{description}" required></textarea>
-        </div>
-        <div class="form-group">
-            <label>Overall Duration (Minutes):</label>
-            <input type="number" th:field="*{durationMinutes}" min="1" required>
-        </div>
+            <!-- Basic Exam Information -->
+            <div class="form-group">
+                <label><i class="fas fa-heading"></i> Title:</label>
+                <input type="text" th:field="*{title}" required placeholder="Enter exam title">
+            </div>
+            <div class="form-group">
+                <label><i class="fas fa-align-left"></i> Description:</label>
+                <textarea th:field="*{description}" required placeholder="Enter exam description"></textarea>
+            </div>
+            <div class="form-group">
+                <label><i class="fas fa-clock"></i> Overall Duration (Minutes):</label>
+                <input type="number" th:field="*{durationMinutes}" min="1" required placeholder="60">
+            </div>
 
-        <!-- Questions -->
-        <h3>Questions</h3>
-        <div id="questions-area">
-            <div th:each="question, qStat : *{questions}" class="question-block" th:attr="data-qindex=${qStat.index}">
-                <h4>Question <span class="question-number" th:text="${qStat.index + 1}"></span></h4>
-                <input type="hidden" th:field="*{questions[__${qStat.index}__].id}" />
+            <!-- Questions Section -->
+            <h3>Questions</h3>
+            <div id="questions-area">
+                <div th:each="question, qStat : *{questions}" class="question-block" th:attr="data-qindex=${qStat.index}">
+                    <h4>Question <span class="question-number" th:text="${qStat.index + 1}"></span></h4>
+                    <input type="hidden" th:field="*{questions[__${qStat.index}__].id}" />
 
-                <div class="form-group">
-                    <label>Question Text:</label>
-                    <input type="text" th:field="*{questions[__${qStat.index}__].text}" required>
-                </div>
-                <div class="form-group">
-                    <label>Time Limit (seconds):</label>
-                    <input type="number" min="5" th:field="*{questions[__${qStat.index}__].timeLimitSeconds}" required>
-                </div>
+                    <div class="form-group">
+                        <label><i class="fas fa-question-circle"></i> Question Text:</label>
+                        <input type="text" th:field="*{questions[__${qStat.index}__].text}" required placeholder="Enter your question">
+                    </div>
+                    <div class="form-group">
+                        <label><i class="fas fa-stopwatch"></i> Time Limit (seconds):</label>
+                        <input type="number" min="5" th:field="*{questions[__${qStat.index}__].timeLimitSeconds}" required placeholder="30">
+                    </div>
 
-                <!-- Options -->
-                <div th:attr="id='options-' + ${qStat.index}">
-                    <div th:each="option, oStat : *{questions[__${qStat.index}__].options}"
-                         class="option-block"
-                         draggable="true"
-                         th:attr="data-qindex=${qStat.index}">
-                        <span class="option-label" th:text="${#strings.chr(97 + oStat.index)} + '.'"></span>
-                        <input type="hidden" th:field="*{questions[__${qStat.index}__].options[__${oStat.index}__].id}" />
-                        <input type="text" th:field="*{questions[__${qStat.index}__].options[__${oStat.index}__].text}" required>
-                        <input type="hidden" th:field="*{questions[__${qStat.index}__].options[__${oStat.index}__].correct}">
-                        <button type="button" class="remove-btn" onclick="removeOption(this)">X</button>
+                    <!-- Options -->
+                    <div th:attr="id='options-' + ${qStat.index}">
+                        <div th:each="option, oStat : *{questions[__${qStat.index}__].options}"
+                             class="option-block"
+                             draggable="true"
+                             th:attr="data-qindex=${qStat.index}">
+                            <span class="option-label" th:text="${#strings.chr(97 + oStat.index).toUpperCase()}"></span>
+                            <input type="hidden" th:field="*{questions[__${qStat.index}__].options[__${oStat.index}__].id}" />
+                            <input type="text" th:field="*{questions[__${qStat.index}__].options[__${oStat.index}__].text}" required placeholder="Enter option text">
+                            <input type="hidden" th:field="*{questions[__${qStat.index}__].options[__${oStat.index}__].correct}">
+                            <button type="button" class="remove-btn" onclick="removeOption(this)" title="Remove Option"></button>
+                        </div>
+                    </div>
+
+                    <label><i class="fas fa-bullseye"></i> Correct Answer:</label>
+                    <div class="drop-zone" th:attr="data-qindex=${qStat.index}">
+                        <span th:if="${question.options.?[correct].size() > 0}"
+                              th:text="'Correct: ' + ${question.options.?[correct].get(0).text}"
+                              class="correct-preview"></span>
+                        <span th:if="${question.options.?[correct].size() == 0}" style="color: var(--gray-500);">
+                            Drag an option here to mark as correct
+                        </span>
+                    </div>
+
+                    <div class="question-actions">
+                        <button type="button" onclick="addOption([[${qStat.index}]])">Add Option</button>
+                        <button type="button" class="remove-btn" onclick="removeQuestion(this)" title="Remove Question">Remove Question</button>
                     </div>
                 </div>
-
-                <label>Correct Answer:</label>
-                <div class="drop-zone" th:attr="data-qindex=${qStat.index}">
-                    <span th:if="${question.options.?[correct].size() > 0}"
-                          th:text="'Correct: ' + ${question.options.?[correct].get(0).text}"
-                          class="correct-preview"></span>
-                    <span th:if="${question.options.?[correct].size() == 0}" style="color:#999;">(None selected yet)</span>
-                </div>
-
-                <button type="button" onclick="addOption([[${qStat.index}]])">+ Add Option</button>
-                <button type="button" class="remove-btn" onclick="removeQuestion(this)">Remove Question</button>
             </div>
-        </div>
 
-        <button type="button" onclick="addQuestion()">+ Add Question</button>
-        <br><br>
-        <button type="submit">Save Changes</button>
-        <a th:href="@{/admin/dashboard}" style="margin-left: 15px;">Cancel</a>
-    </form>
+            <button type="button" onclick="addQuestion()">Add Question</button>
+
+            <div class="form-actions">
+                <button type="submit">Save Changes</button>
+                <a th:href="@{/admin/dashboard}">Cancel</a>
+            </div>
+        </form>
+    </div>
 </div>
 
 <script>
@@ -108,18 +646,20 @@
         qDiv.innerHTML = `
             <h4>Question <span class="question-number"></span></h4>
             <div class="form-group">
-                <label>Question Text:</label>
-                <input type="text" name="questions[${questionIndex}].text" required>
+                <label><i class="fas fa-question-circle"></i> Question Text:</label>
+                <input type="text" name="questions[${questionIndex}].text" required placeholder="Enter your question">
             </div>
             <div class="form-group">
-                <label>Time Limit (seconds):</label>
-                <input type="number" name="questions[${questionIndex}].timeLimitSeconds" min="5" required>
+                <label><i class="fas fa-stopwatch"></i> Time Limit (seconds):</label>
+                <input type="number" name="questions[${questionIndex}].timeLimitSeconds" min="5" required placeholder="30">
             </div>
             <div id="options-${questionIndex}"></div>
-            <label>Correct Answer:</label>
-            <div class="drop-zone" data-qindex="${questionIndex}">(None selected yet)</div>
-            <button type="button" onclick="addOption(${questionIndex})">+ Add Option</button>
-            <button type="button" class="remove-btn" onclick="removeQuestion(this)">Remove Question</button>
+            <label><i class="fas fa-bullseye"></i> Correct Answer:</label>
+            <div class="drop-zone" data-qindex="${questionIndex}">Drag an option here to mark as correct</div>
+            <div class="question-actions">
+                <button type="button" onclick="addOption(${questionIndex})">Add Option</button>
+                <button type="button" class="remove-btn" onclick="removeQuestion(this)" title="Remove Question">Remove Question</button>
+            </div>
         `;
         qArea.appendChild(qDiv);
         questionIndex++;
@@ -130,43 +670,48 @@
     function addOption(qIndex) {
         const oa = document.getElementById(`options-${qIndex}`);
         const oIndex = oa ? oa.children.length : 0;
-        const label = String.fromCharCode(97 + oIndex) + '.';
+        const label = String.fromCharCode(65 + oIndex); // A, B, C, D...
         const optDiv = document.createElement('div');
         optDiv.classList.add('option-block');
         optDiv.setAttribute('draggable', 'true');
         optDiv.setAttribute('data-qindex', qIndex);
         optDiv.innerHTML = `
             <span class="option-label">${label}</span>
-            <input type="text" name="questions[${qIndex}].options[${oIndex}].text" required>
+            <input type="text" name="questions[${qIndex}].options[${oIndex}].text" required placeholder="Enter option text">
             <input type="hidden" name="questions[${qIndex}].options[${oIndex}].correct" value="false">
-            <button type="button" class="remove-btn" onclick="removeOption(this)">X</button>
+            <button type="button" class="remove-btn" onclick="removeOption(this)" title="Remove Option"></button>
         `;
         if (oa) oa.appendChild(optDiv);
         renumberFormFields();
     }
 
     function removeQuestion(btn) {
-        btn.closest('.question-block').remove();
-        updateQuestionNumbers();
-        renumberFormFields();
+        if (confirm('⚠️ Are you sure you want to remove this question?\n\nThis action cannot be undone.')) {
+            btn.closest('.question-block').remove();
+            updateQuestionNumbers();
+            renumberFormFields();
+        }
     }
 
     function removeOption(btn) {
-        btn.closest('.option-block').remove();
-        renumberOptions(btn.closest('.question-block'));
-        renumberFormFields();
+        if (confirm('Remove this option?')) {
+            btn.closest('.option-block').remove();
+            renumberOptions(btn.closest('.question-block'));
+            renumberFormFields();
+        }
     }
 
     function updateQuestionNumbers() {
         document.querySelectorAll('#questions-area .question-block').forEach((block, idx) => {
-            block.querySelector('.question-number').textContent = idx + 1;
+            const numberEl = block.querySelector('.question-number');
+            if (numberEl) numberEl.textContent = idx + 1;
             renumberOptions(block);
         });
     }
 
     function renumberOptions(qBlock) {
         qBlock.querySelectorAll('.option-block').forEach((opt, idx) => {
-            opt.querySelector('.option-label').textContent = String.fromCharCode(97 + idx) + '.';
+            opt.querySelector('.option-label').textContent = String.fromCharCode(65 + idx);
         });
     }
 
@@ -189,55 +734,98 @@
         });
     }
 
-    // Drag-drop for correct answer
+    // Drag and Drop Functionality
     document.addEventListener('dragstart', e => {
         if (e.target.classList.contains('option-block')) {
             draggedOption = e.target;
+            e.target.classList.add('dragging');
             e.dataTransfer.effectAllowed = 'move';
         }
     });
+
+    document.addEventListener('dragend', e => {
+        if (e.target.classList.contains('option-block')) {
+            e.target.classList.remove('dragging');
+        }
+    });
+
     document.addEventListener('dragover', e => {
         if (e.target.classList.contains('drop-zone')) {
             e.preventDefault();
             e.target.classList.add('highlight');
         }
     });
+
     document.addEventListener('dragleave', e => {
         if (e.target.classList.contains('drop-zone')) {
             e.target.classList.remove('highlight');
         }
     });
+
     document.addEventListener('drop', e => {
         if (e.target.classList.contains('drop-zone')) {
             e.preventDefault();
             e.target.classList.remove('highlight');
             const qIndex = e.target.getAttribute('data-qindex');
+
+            // Clear all correct answers for this question
             document.querySelectorAll(`.option-block[data-qindex="${qIndex}"] input[type="hidden"]`)
                 .forEach(h => h.value = false);
+
+            // Set the dropped option as correct
             draggedOption.querySelector('input[type="hidden"]').value = true;
-            e.target.innerHTML = `<strong class="correct-preview">Correct:</strong> ${draggedOption.querySelector('input[type="text"]').value}`;
+
+            // Update the drop zone display
+            const optionText = draggedOption.querySelector('input[type="text"]').value || 'Selected option';
+            e.target.innerHTML = `<span class="correct-preview">Correct: ${optionText}</span>`;
         }
     });
 
     function validateForm() {
         let valid = true;
+
+        // Clear previous error highlights
         document.querySelectorAll('.question-block').forEach(qb => qb.classList.remove('error-highlight'));
+
+        // Check each question for a correct answer
         document.querySelectorAll('#questions-area .question-block').forEach((block, idx) => {
             const hasCorrect = Array.from(block.querySelectorAll('input[type="hidden"][name*=".correct"]'))
                 .some(h => h.value === "true" || h.value === true);
+
             if (!hasCorrect) {
                 block.classList.add('error-highlight');
-                alert(`Question ${idx + 1} has no correct answer selected!`);
+                alert(`⚠️ Question ${idx + 1} has no correct answer selected!\n\nPlease drag an option to the correct answer zone.`);
                 valid = false;
+                block.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                return false; // Stop at first error
             }
         });
+
+        if (valid) {
+            // Add loading state to submit button
+            const submitBtn = document.querySelector('button[type="submit"]');
+            submitBtn.innerHTML = '<span class="loading"></span> Saving Changes...';
+            submitBtn.disabled = true;
+        }
+
         return valid;
     }
 
+    // Initialize on page load
     document.addEventListener('DOMContentLoaded', () => {
         questionIndex = document.querySelectorAll('#questions-area .question-block').length;
         updateQuestionNumbers();
         renumberFormFields();
+
+        // Add smooth scrolling for better UX
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                document.querySelector(this.getAttribute('href')).scrollIntoView({
+                    behavior: 'smooth'
+                });
+            });
+        });
     });
 </script>
 

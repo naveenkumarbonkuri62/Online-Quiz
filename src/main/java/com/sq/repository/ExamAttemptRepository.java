@@ -11,7 +11,7 @@ import java.util.Optional;
 
 public interface ExamAttemptRepository extends JpaRepository<ExamAttempt, Long> {
 
-    // Eagerly load only Exam (questions & options via SUBSELECT)
+    /** Eagerly load only Exam (questions & options via SUBSELECT) for a given user */
     @Query("""
         SELECT ea FROM ExamAttempt ea
         JOIN FETCH ea.exam e
@@ -19,13 +19,22 @@ public interface ExamAttemptRepository extends JpaRepository<ExamAttempt, Long> 
     """)
     List<ExamAttempt> findByUserWithExam(@Param("user") User user);
 
+    /** Secure single attempt fetch by ID and username */
     Optional<ExamAttempt> findByIdAndUserUsername(Long attemptId, String username);
 
-    // Load attempt & exam only; questions & options come via SUBSELECT
+    /** Load attempt & exam only; questions & options come via SUBSELECT */
     @Query("""
         SELECT ea FROM ExamAttempt ea
         JOIN FETCH ea.exam e
         WHERE ea.id = :attemptId
     """)
     Optional<ExamAttempt> findByIdWithExamQuestionsAndOptions(@Param("attemptId") Long attemptId);
+
+    /** ✅ NEW: Load all attempts for a given exam (with User data for export) */
+    @Query("""
+        SELECT ea FROM ExamAttempt ea
+        JOIN FETCH ea.user u
+        WHERE ea.exam.id = :examId
+    """)
+    List<ExamAttempt> findByExamIdWithUser(@Param("examId") Long examId);
 }

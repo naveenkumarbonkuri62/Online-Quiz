@@ -44,9 +44,9 @@ public class ExamAttemptService {
         attempt.setExam(exam);
         attempt.setTotalQuestions(exam.getQuestions().size());
         attempt.setCorrectAnswers(correctCount);
-        attempt.setScore(correctCount); // ✅ adjust if weight scoring
+        attempt.setScore(correctCount); // ✅ adjust if weight scoring in future
         attempt.setAttemptDate(LocalDateTime.now());
-        attempt.setAnswers(safeAnswers); // ✅ Stored for result page
+        attempt.setAnswers(safeAnswers);
         attempt.setEarlyExit(earlyExit);
 
         return attemptRepo.save(attempt);
@@ -71,5 +71,10 @@ public class ExamAttemptService {
     /** Secure fetch */
     public ExamAttempt getAttemptForUser(Long attemptId, String username) {
         return attemptRepo.findByIdAndUserUsername(attemptId, username).orElse(null);
+    }
+
+    /** ✅ NEW: Get all attempts for a specific exam (for admin Excel export) */
+    public List<ExamAttempt> getAttemptsByExam(Long examId) {
+        return attemptRepo.findByExamIdWithUser(examId);
     }
 }

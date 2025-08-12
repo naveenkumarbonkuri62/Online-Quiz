@@ -2,102 +2,499 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <title th:text="${attempt.exam.title} + ' - Result'">Result</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
+        :root {
+            --primary-50: #eff6ff;
+            --primary-100: #dbeafe;
+            --primary-200: #bfdbfe;
+            --primary-300: #93c5fd;
+            --primary-400: #60a5fa;
+            --primary-500: #3b82f6;
+            --primary-600: #2563eb;
+            --primary-700: #1d4ed8;
+            --primary-800: #1e40af;
+            --primary-900: #1e3a8a;
+
+            --success-50: #f0fdf4;
+            --success-100: #dcfce7;
+            --success-500: #22c55e;
+            --success-600: #16a34a;
+
+            --warning-50: #fffbeb;
+            --warning-100: #fef3c7;
+            --warning-500: #f59e0b;
+            --warning-600: #d97706;
+
+            --error-50: #fef2f2;
+            --error-100: #fee2e2;
+            --error-500: #ef4444;
+            --error-600: #dc2626;
+
+            --gray-50: #f9fafb;
+            --gray-100: #f3f4f6;
+            --gray-200: #e5e7eb;
+            --gray-300: #d1d5db;
+            --gray-400: #9ca3af;
+            --gray-500: #6b7280;
+            --gray-600: #4b5563;
+            --gray-700: #374151;
+            --gray-800: #1f2937;
+            --gray-900: #111827;
+
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+            --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
         body {
-            font-family: Arial, sans-serif;
-            background: #f4f4f4;
-            margin: 0; padding: 20px;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, var(--gray-50) 0%, var(--primary-50) 100%);
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            color: var(--gray-800);
+            line-height: 1.6;
         }
+
+        /* Header Styling */
+        header {
+            background: linear-gradient(135deg, var(--primary-600) 0%, var(--primary-700) 100%);
+            color: white;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: var(--shadow-lg);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            backdrop-filter: blur(10px);
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 1.875rem;
+            font-weight: 700;
+            user-select: none;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        header h1::before {
+            content: "🎓";
+            font-size: 2rem;
+        }
+
+        /* Container */
         .container {
-            max-width: 900px;
-            margin: auto;
-            padding: 20px;
-            background: #fff;
-            border-radius: 8px;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+            max-width: 1000px;
+            margin: 2rem auto;
+            background: white;
+            border-radius: 1.5rem;
+            box-shadow: var(--shadow-xl);
+            overflow: hidden;
+            border: 1px solid var(--gray-200);
         }
-        h1 { color: #007bff; }
-        .summary { margin-bottom: 20px; }
+
+        .container-inner {
+            padding: 2rem;
+        }
+
+        /* Exam Title */
+        .exam-title {
+            font-size: 2.25rem;
+            font-weight: 700;
+            color: var(--primary-700);
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 3px solid var(--primary-200);
+            position: relative;
+        }
+
+        .exam-title::after {
+            content: "";
+            position: absolute;
+            bottom: -3px;
+            left: 0;
+            width: 80px;
+            height: 3px;
+            background: linear-gradient(90deg, var(--primary-600), var(--primary-400));
+            border-radius: 2px;
+        }
+
+        /* Summary Section */
+        .summary {
+            background: linear-gradient(135deg, var(--primary-50) 0%, white 100%);
+            border: 2px solid var(--primary-100);
+            border-radius: 1rem;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .summary-item {
+            text-align: center;
+        }
+
+        .summary-label {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--gray-600);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .summary-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--gray-800);
+        }
+
+        .score-value {
+            font-size: 2rem;
+            font-weight: 800;
+        }
+
+        /* Question Cards */
         .question {
-            background: #f9f9f9;
-            border: 1px solid #ddd;
-            padding: 12px;
-            margin-bottom: 15px;
-            border-radius: 5px;
+            background: linear-gradient(135deg, var(--gray-50) 0%, white 100%);
+            border: 2px solid var(--gray-200);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: var(--shadow-sm);
+            transition: all 0.3s ease;
+            animation: fadeIn 0.5s ease-in-out;
         }
+
+        .question:hover {
+            box-shadow: var(--shadow-md);
+            transform: translateY(-2px);
+        }
+
+        .question-header {
+            font-size: 1.125rem;
+            font-weight: 700;
+            color: var(--gray-800);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+        }
+
+        .question-number {
+            background: var(--primary-600);
+            color: white;
+            border-radius: 50%;
+            width: 2rem;
+            height: 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.875rem;
+            font-weight: 600;
+            flex-shrink: 0;
+        }
+
+        /* Options */
         .option {
-            padding: 6px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            margin: 4px 0;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 1rem;
+            border: 2px solid var(--gray-200);
+            border-radius: 0.75rem;
+            margin: 0.5rem 0;
+            transition: all 0.2s ease;
+            position: relative;
         }
+
+        .option-icon {
+            font-size: 1.25rem;
+            font-weight: bold;
+            width: 1.5rem;
+            text-align: center;
+        }
+
+        .option-text {
+            flex: 1;
+            font-weight: 500;
+        }
+
+        .option-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-left: 0.5rem;
+        }
+
         .correct {
-            background: #d4edda;
-            color: #155724;
-            font-weight: bold;
+            background: linear-gradient(135deg, var(--success-50) 0%, var(--success-100) 100%);
+            border-color: var(--success-200);
+            color: var(--success-700);
         }
+
         .wrong {
-            background: #f8d7da;
-            color: #721c24;
-            font-weight: bold;
+            background: linear-gradient(135deg, var(--error-50) 0%, var(--error-100) 100%);
+            border-color: var(--error-200);
+            color: var(--error-700);
         }
+
         .selected {
             border-width: 2px;
-            border-color: #007bff;
+            box-shadow: var(--shadow-sm);
         }
+
+        /* Skipped Question */
         .skipped {
-            color: gray;
+            background: linear-gradient(135deg, var(--warning-50) 0%, var(--warning-100) 100%);
+            border: 2px solid var(--warning-200);
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            text-align: center;
+            color: var(--warning-700);
+            font-weight: 600;
             font-style: italic;
+            margin: 1rem 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
         }
-        .option-icon {
-            margin-right: 6px;
-            font-weight: bold;
+
+        .skipped::before {
+            content: "⚠️";
+            font-size: 1.25rem;
+        }
+
+        /* Button Styling */
+        .btn {
+            background: linear-gradient(135deg, var(--primary-600) 0%, var(--primary-700) 100%);
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 0.75rem;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 1rem;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            text-decoration: none;
+            margin-top: 2rem;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+            background: linear-gradient(135deg, var(--primary-700) 0%, var(--primary-800) 100%);
+            color: white;
+            text-decoration: none;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-600) 0%, var(--primary-700) 100%);
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(135deg, var(--primary-700) 0%, var(--primary-800) 100%);
+        }
+
+        .btn::before {
+            content: "⬅️";
+            font-size: 1rem;
+        }
+
+        .back-button-container {
+            text-align: center;
+            padding-top: 2rem;
+            border-top: 1px solid var(--gray-200);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .container {
+                margin: 1rem;
+                border-radius: 1rem;
+            }
+
+            .container-inner {
+                padding: 1rem;
+            }
+
+            header {
+                padding: 1rem;
+            }
+
+            header h1 {
+                font-size: 1.5rem;
+            }
+
+            .summary-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .exam-title {
+                font-size: 1.75rem;
+            }
+
+            .question-header {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+
+            .question-number {
+                align-self: flex-start;
+            }
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Score Color Logic */
+        .score-excellent { color: var(--success-600); }
+        .score-good { color: var(--warning-600); }
+        .score-poor { color: var(--error-600); }
+
+        /* Additional Visual Enhancements */
+        .correct-answer-note {
+            font-style: italic;
+            font-weight: normal;
+            color: var(--success-600);
+        }
+
+        .user-choice-correct {
+            background: var(--success-100);
+            color: var(--success-600);
+        }
+
+        .user-choice-wrong {
+            background: var(--error-100);
+            color: var(--error-600);
         }
     </style>
 </head>
 <body>
+
+<header>
+    <h1>SmartExam</h1>
+</header>
+
 <div class="container">
-    <h1 th:text="${attempt.exam.title}"></h1>
-    <div class="summary">
-        <p>Date: <span th:text="${#temporals.format(attempt.attemptDate, 'dd-MM-yyyy HH:mm')}"></span></p>
-        <p>Score: <span th:text="${attempt.score} + ' / ' + ${attempt.totalQuestions}"></span></p>
-    </div>
+    <div class="container-inner">
+        <!-- Exam Title -->
+        <h1 class="exam-title" th:text="${attempt.exam.title}">Exam Title</h1>
 
-    <div th:each="q, idx : ${attempt.exam.questions}" class="question"
-         th:with="selectedOptionId=${answers[q.id]}">
-        <p><b th:text="'Q' + (${idx.index} + 1) + '. ' + ${q.text}"></b></p>
-
-        <!-- Skipped question -->
-        <div th:if="${selectedOptionId == null}" class="skipped">
-            You did not answer this question.
+        <!-- Summary Section -->
+        <div class="summary">
+            <div class="summary-grid">
+                <div class="summary-item">
+                    <div class="summary-label">
+                        <i class="fas fa-calendar-alt"></i>
+                        📅 Date Taken
+                    </div>
+                    <div class="summary-value" th:text="${#temporals.format(attempt.attemptDate, 'dd-MM-yyyy HH:mm')}">01-01-2024 10:30</div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-label">
+                        <i class="fas fa-chart-bar"></i>
+                        📊 Score
+                    </div>
+                    <div class="summary-value score-value"
+                         th:classappend="${attempt.score * 100 / attempt.totalQuestions >= 80} ? 'score-excellent' : (${attempt.score * 100 / attempt.totalQuestions >= 60} ? 'score-good' : 'score-poor')"
+                         th:text="${attempt.score} + ' / ' + ${attempt.totalQuestions}">2 / 3</div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-label">
+                        <i class="fas fa-percentage"></i>
+                        🎯 Percentage
+                    </div>
+                    <div class="summary-value score-value"
+                         th:classappend="${attempt.score * 100 / attempt.totalQuestions >= 80} ? 'score-excellent' : (${attempt.score * 100 / attempt.totalQuestions >= 60} ? 'score-good' : 'score-poor')"
+                         th:text="${#numbers.formatDecimal(attempt.score * 100 / attempt.totalQuestions, 0, 0)} + '%'">67%</div>
+                </div>
+            </div>
         </div>
 
-        <!-- Options -->
-        <div th:each="opt : ${q.options}"
-             th:class="'option'
-                       + (${opt.correct} ? ' correct' : '')
-                       + (${opt.id == selectedOptionId and !opt.correct} ? ' wrong' : '')
-                       + (${opt.id == selectedOptionId} ? ' selected' : '')">
+        <!-- Questions -->
+        <div th:each="q, idx : ${attempt.exam.questions}" class="question"
+             th:with="selectedOptionId=${answers[q.id]}">
 
-            <!-- Icon for correct options -->
-            <span class="option-icon" th:text="${opt.correct} ? '✔' : ''"></span>
-            <span th:text="${opt.text}"></span>
+            <div class="question-header">
+                <div class="question-number" th:text="${idx.index + 1}">1</div>
+                <div th:text="${q.text}">Question text here</div>
+            </div>
 
-            <!-- User wrong -->
-            <span th:if="${opt.id == selectedOptionId and !opt.correct}"
-                  style="margin-left:8px;">❌ Your Choice</span>
+            <!-- Skipped question -->
+            <div th:if="${selectedOptionId == null}" class="skipped">
+                You did not answer this question
+            </div>
 
-            <!-- User correct -->
-            <span th:if="${opt.id == selectedOptionId and opt.correct}"
-                  style="margin-left:8px;">✅ Your Choice</span>
+            <!-- Options -->
+            <div th:each="opt : ${q.options}"
+                 th:class="'option'
+                           + (${opt.correct} ? ' correct' : '')
+                           + (${opt.id == selectedOptionId and !opt.correct} ? ' wrong' : '')
+                           + (${opt.id == selectedOptionId} ? ' selected' : '')">
 
-            <!-- Correct answer (when user wrong) -->
-            <span th:if="${opt.correct and opt.id != selectedOptionId}"
-                  style="margin-left:8px; font-weight:normal; font-style:italic;">
-                (Correct Answer)
-            </span>
+                <!-- Icon for correct options -->
+                <div class="option-icon">
+                    <span th:if="${opt.correct}" style="color: var(--success-600);">✅</span>
+                </div>
+
+                <div class="option-text" th:text="${opt.text}">Option text</div>
+
+                <div>
+                    <!-- User wrong choice -->
+                    <span th:if="${opt.id == selectedOptionId and !opt.correct}"
+                          class="option-badge user-choice-wrong">❌ Your Choice</span>
+
+                    <!-- User correct choice -->
+                    <span th:if="${opt.id == selectedOptionId and opt.correct}"
+                          class="option-badge user-choice-correct">✅ Your Choice</span>
+
+                    <!-- Correct answer (when user was wrong) -->
+                    <span th:if="${opt.correct and opt.id != selectedOptionId}"
+                          class="option-badge" style="background: var(--success-100); color: var(--success-600);">
+                        Correct Answer
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Back to dashboard button -->
+        <div class="back-button-container">
+            <a href="/user/dashboard" class="btn btn-primary">Back to Dashboard</a>
         </div>
     </div>
 </div>
+
 </body>
 </html>

@@ -1,15 +1,21 @@
 package com.sq.controller;
 
 import com.sq.entity.Exam;
+import com.sq.entity.ExamAttempt;
 import com.sq.entity.Question;
 import com.sq.entity.Option;
 import com.sq.service.ExamService;
 import com.sq.service.UserService;
+import com.sq.service.ExamAttemptService;
+import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import jakarta.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.security.Principal;
 import java.util.ArrayList;
 import java.util.List;
@@ -20,15 +26,22 @@ public class AdminController {
 
     private final ExamService examService;
     private final UserService userService;
+    private final ExamAttemptService attemptService;
 
-    public AdminController(ExamService examService, UserService userService) {
+    public AdminController(ExamService examService,
+                           UserService userService,
+                           ExamAttemptService attemptService) {
         this.examService = examService;
         this.userService = userService;
+        this.attemptService = attemptService;
     }
 
     /** Admin dashboard view */
     @GetMapping("/dashboard")
     public String adminDashboard(Model model, Principal principal) {
+        if (principal == null) {
+            return "redirect:/login";
+        }
         model.addAttribute("exam", new Exam());
         model.addAttribute("exams", examService.getExamsByAdmin(principal.getName()));
         model.addAttribute("allUsers", userService.getAllUsers());
@@ -40,143 +53,84 @@ public class AdminController {
     public String createExam(@ModelAttribute Exam exam,
                              Principal principal,
                              RedirectAttributes redirectAttributes) {
+        if (principal == null) return "redirect:/login";
         exam.setCreatedBy(principal.getName());
         exam.setReleaseToAll(true);
         exam.setAllowedUsers(null);
         linkQuestionsAndOptions(exam);
-
         examService.saveExam(exam);
         redirectAttributes.addFlashAttribute("toastMessage", "✅ Exam created successfully!");
         redirectAttributes.addFlashAttribute("toastType", "success");
         return "redirect:/admin/dashboard";
     }
 
-    /** Show edit form */
-    @GetMapping("/edit-exam/{id}")
-    public String editExam(@PathVariable Long id, Model model, Principal principal) {
-        Exam exam = examService.getExamByIdWithQuestionsAndOptions(id);
+    /** ✅ Export all attempts for a single exam as Excel */
+    @GetMapping("/export-exam-attempts/{examId}")
+    public void exportExamAttempts(@PathVariable Long examId,
+                                   Principal principal,
+                                   HttpServletResponse response) throws IOException {
+
+        if (principal == null) {
+            response.sendRedirect("/login");
+            return;
+        }
+
+        Exam exam = examService.getExamById(examId);
         if (exam == null) {
-            throw new RuntimeException("Exam not found or invalid ID: " + id);
-        }
-        if (!exam.getCreatedBy().equals(principal.getName())) {
-            throw new RuntimeException("Unauthorized access to exam " + id);
-        }
-        if (exam.getQuestions() == null) {
-            exam.setQuestions(new ArrayList<>());
-        }
-        model.addAttribute("exam", exam);
-        model.addAttribute("allUsers", userService.getAllUsers());
-        return "edit-exam";
-    }
-
-    /** Update existing exam */
-    @PostMapping("/edit-exam/{id}")
-    public String updateExam(@PathVariable Long id,
-                             @ModelAttribute Exam updatedExam,
-                             Principal principal,
-                             RedirectAttributes redirectAttributes) {
-        Exam existing = examService.getExamByIdWithQuestionsAndOptions(id);
-        if (existing == null || !existing.getCreatedBy().equals(principal.getName())) {
-            redirectAttributes.addFlashAttribute("toastMessage", "⚠ You cannot edit this exam.");
-            redirectAttributes.addFlashAttribute("toastType", "error");
-            return "redirect:/admin/dashboard";
+            response.sendError(HttpServletResponse.SC_NOT_FOUND, "Exam not found");
+            return;
         }
 
-        existing.setTitle(updatedExam.getTitle());
-        existing.setDescription(updatedExam.getDescription());
-        existing.setDurationMinutes(updatedExam.getDurationMinutes());
-
-        // Remove deleted questions
-        if (existing.getQuestions() == null) existing.setQuestions(new ArrayList<>());
-        existing.getQuestions().removeIf(q ->
-                updatedExam.getQuestions() == null ||
-                        updatedExam.getQuestions().stream().noneMatch(uq -> uq.getId() != null && uq.getId().equals(q.getId()))
-        );
-
-        // Add/update questions
-        if (updatedExam.getQuestions() != null) {
-            for (Question updatedQ : updatedExam.getQuestions()) {
-                Question existingQ = existing.getQuestions().stream()
-                        .filter(q -> q.getId() != null && q.getId().equals(updatedQ.getId()))
-                        .findFirst()
-                        .orElse(null);
-
-                if (existingQ == null) {
-                    updatedQ.setExam(existing);
-                    linkOptions(updatedQ);
-                    existing.getQuestions().add(updatedQ);
-                } else {
-                    existingQ.setText(updatedQ.getText());
-                    existingQ.setTimeLimitSeconds(updatedQ.getTimeLimitSeconds());
-                    if (existingQ.getOptions() == null) existingQ.setOptions(new ArrayList<>());
-                    existingQ.getOptions().removeIf(op ->
-                            updatedQ.getOptions() == null ||
-                                    updatedQ.getOptions().stream().noneMatch(uo -> uo.getId() != null && uo.getId().equals(op.getId()))
-                    );
-                    if (updatedQ.getOptions() != null) {
-                        for (Option updatedOp : updatedQ.getOptions()) {
-                            Option existingOp = existingQ.getOptions().stream()
-                                    .filter(op -> op.getId() != null && op.getId().equals(updatedOp.getId()))
-                                    .findFirst()
-                                    .orElse(null);
-                            if (existingOp == null) {
-                                updatedOp.setQuestion(existingQ);
-                                existingQ.getOptions().add(updatedOp);
-                            } else {
-                                existingOp.setText(updatedOp.getText());
-                                existingOp.setCorrect(updatedOp.isCorrect());
-                            }
-                        }
-                        ensureOneCorrectOption(existingQ);
-                    }
-                }
-            }
+        if (exam.getCreatedBy() == null ||
+                !exam.getCreatedBy().equalsIgnoreCase(principal.getName())) {
+            response.sendError(HttpServletResponse.SC_FORBIDDEN, "You cannot export this exam.");
+            return;
         }
 
-        examService.saveExam(existing);
-        redirectAttributes.addFlashAttribute("toastMessage", "✅ Exam updated successfully!");
-        redirectAttributes.addFlashAttribute("toastType", "success");
-        return "redirect:/admin/dashboard";
-    }
+        List<ExamAttempt> attempts = attemptService.getAttemptsByExam(examId);
 
-    /** Delete exam */
-    @PostMapping("/delete-exam/{id}")
-    public String deleteExam(@PathVariable Long id, Principal principal, RedirectAttributes redirectAttributes) {
-        Exam exam = examService.getExamById(id);
-        if (exam != null && exam.getCreatedBy().equals(principal.getName())) {
-            examService.deleteExamById(id);
-            redirectAttributes.addFlashAttribute("toastMessage", "🗑 Exam deleted successfully!");
-            redirectAttributes.addFlashAttribute("toastType", "success");
-        } else {
-            redirectAttributes.addFlashAttribute("toastMessage", "⚠ You cannot delete this exam.");
-            redirectAttributes.addFlashAttribute("toastType", "error");
-        }
-        return "redirect:/admin/dashboard";
-    }
+        // HTTP Response for Excel
+        response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        String fileName = exam.getTitle().replaceAll("\\s+", "_") + "_attempts.xlsx";
+        response.setHeader("Content-Disposition", "attachment; filename=" + fileName);
 
-    /** Update release settings */
-    @PostMapping("/update-release/{id}")
-    public String updateRelease(@PathVariable Long id,
-                                @RequestParam boolean releaseToAll,
-                                @RequestParam(required = false) List<Long> selectedUserIds,
-                                Principal principal,
-                                RedirectAttributes redirectAttributes) {
-        Exam exam = examService.getExamById(id);
-        if (exam != null && exam.getCreatedBy().equals(principal.getName())) {
-            exam.setReleaseToAll(releaseToAll);
-            if (!releaseToAll && selectedUserIds != null && !selectedUserIds.isEmpty()) {
-                exam.setAllowedUsers(userService.findUsersByIds(selectedUserIds));
-            } else {
-                exam.setAllowedUsers(null);
-            }
-            examService.saveExam(exam);
-            redirectAttributes.addFlashAttribute("toastMessage", "✅ Release settings updated!");
-            redirectAttributes.addFlashAttribute("toastType", "success");
-        } else {
-            redirectAttributes.addFlashAttribute("toastMessage", "⚠ Cannot update release settings.");
-            redirectAttributes.addFlashAttribute("toastType", "error");
+        // Workbook setup
+        Workbook workbook = new XSSFWorkbook();
+        Sheet sheet = workbook.createSheet("Exam Attempts");
+
+        // Header style
+        Font headerFont = workbook.createFont();
+        headerFont.setBold(true);
+        headerFont.setColor(IndexedColors.WHITE.getIndex());
+        CellStyle headerCellStyle = workbook.createCellStyle();
+        headerCellStyle.setFillForegroundColor(IndexedColors.BLUE.getIndex());
+        headerCellStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+        headerCellStyle.setFont(headerFont);
+
+        String[] columns = {"Username", "Score", "Total Questions", "Attempt Date", "Early Exit"};
+        Row headerRow = sheet.createRow(0);
+        for (int i = 0; i < columns.length; i++) {
+            Cell cell = headerRow.createCell(i);
+            cell.setCellValue(columns[i]);
+            cell.setCellStyle(headerCellStyle);
         }
-        return "redirect:/admin/dashboard";
+
+        int rowNum = 1;
+        for (ExamAttempt attempt : attempts) {
+            Row row = sheet.createRow(rowNum++);
+            row.createCell(0).setCellValue(attempt.getUser().getUsername());
+            row.createCell(1).setCellValue(attempt.getScore());
+            row.createCell(2).setCellValue(attempt.getTotalQuestions());
+            row.createCell(3).setCellValue(attempt.getAttemptDate().toString());
+            row.createCell(4).setCellValue(attempt.isEarlyExit() ? "Yes" : "No");
+        }
+
+        for (int i = 0; i < columns.length; i++) {
+            sheet.autoSizeColumn(i);
+        }
+
+        workbook.write(response.getOutputStream());
+        workbook.close();
     }
 
     /** Helpers */

@@ -43,10 +43,13 @@ public class SecurityConfig {
                 .formLogin(form -> form
                         .loginPage("/login")
                         .successHandler((request, response, authentication) -> {
-                            String role = authentication.getAuthorities().iterator().next().getAuthority();
-                            if ("ROLE_ADMIN".equals(role)) {
+                            boolean isAdmin = authentication.getAuthorities().stream()
+                                    .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+                            boolean isUser = authentication.getAuthorities().stream()
+                                    .anyMatch(a -> a.getAuthority().equals("ROLE_USER"));
+                            if (isAdmin) {
                                 response.sendRedirect("/admin/dashboard");
-                            } else if ("ROLE_USER".equals(role)) {
+                            } else if (isUser) {
                                 response.sendRedirect("/user/dashboard");
                             } else {
                                 response.sendRedirect("/");
@@ -58,7 +61,8 @@ public class SecurityConfig {
                         .logoutUrl("/logout")
                         .logoutSuccessUrl("/")
                         .permitAll()
-                );
+                )
+                .authenticationProvider(authenticationProvider());
 
         return http.build();
     }
